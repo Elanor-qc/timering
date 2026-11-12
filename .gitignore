@@ -1,0 +1,22 @@
+# Installed dependencies and downloaded Neutralino runtimes
+/node_modules/
+/bin/
+
+# Build outputs and local previews
+/dist/
+/dist-*/
+/.tmp/
+/resources/native/*.exe
+*.neu
+
+# Runtime state, logs, and credentials
+/.storage/
+/.neutralino/
+*.log
+.env
+.env.*
+!.env.example
+
+# OS metadata
+.DS_Store
+Thumbs.db

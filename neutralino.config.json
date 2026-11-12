@@ -1,0 +1,29 @@
+{
+  "applicationId": "org.timering.app",
+  "port": 5139,
+  "defaultMode": "window",
+  "documentRoot": "/resources/",
+  "url": "/",
+  "enableServer": true,
+  "enableNativeAPI": true,
+  "exportAuthInfo": true,
+  "modes": {
+    "window": {
+      "title": "时环",
+      "width": 460,
+      "height": 620,
+      "minWidth": 380,
+      "minHeight": 480,
+      "exitProcessOnClose": false,
+      "icon": "/resources/icons/appIcon.png",
+      "enableInspector": false
+    }
+  },
+  "cli": {
+    "binaryName": "timering",
+    "resourcesPath": "/resources/",
+    "clientLibrary": "/resources/js/neutralino.js/neutralino.js",
+    "binaryVersion": "6.10.0",
+    "clientVersion": "6.10.0"
+  }
+}
