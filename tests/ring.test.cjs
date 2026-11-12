@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const source = fs.readFileSync('resources/js/app.js', 'utf8');
-function harness() {
+function harness(android = false) {
   const handlers = {};
-  const node = () => ({ innerHTML: '', style: {}, hidden: true, children: [],
+  const node = () => ({ innerHTML: '', style: {}, hidden: true, children: [], addEventListener() {},
     setAttribute(k, v) { this[k] = v; }, append(p) { this.children.push(p); } });
   const svg = { ...node(),
     getBoundingClientRect: () => ({ left: 10, top: 20, width: 400, height: 500 }),
@@ -15,11 +15,13 @@ function harness() {
     setPointerCapture() {}, releasePointerCapture() {}, hasPointerCapture: () => true,
     addEventListener(name, cb) { handlers[name] = cb; } };
   const tip = node(), preview = node(), opened = [], dayHandlers = {};
+  const precision = { value: '15' };
   const day = { addEventListener(name, cb) { dayHandlers[name] = cb; } };
   const ctx = vm.createContext({ Math, document: { createElementNS: node },
-    $: selector => selector === '#dayView' ? day : tip, ringSvg: svg, gPreview: preview, segments: [],
+    $: selector => selector === '#dayView' ? day : selector === '#touchPrecision' ? precision : tip, ringSvg: svg, gPreview: preview, segments: [],
     spanOf: s => ((s.end - s.start + 1440) % 1440) || 1440,
     CX: 200, CY: 200, TRACK_R: 150, ARC_W: 26,
+    ANDROID: android,
     minToHM: String, fmtDur: String, openPopover: x => opened.push(x) });
   vm.runInContext(source.slice(source.indexOf('function polar('), source.indexOf('function buildRing(')), ctx);
   vm.runInContext(source.slice(source.indexOf('let dragging = null;'), source.indexOf('/* ============================== 弹窗')), ctx);
@@ -28,7 +30,7 @@ function harness() {
     return { clientX: 210 + 150 * Math.cos(rad), clientY: 270 + 150 * Math.sin(rad),
       pointerId: 1, button: 0, target: {}, shiftKey: false, preventDefault() {}, ...extra };
   };
-  return { ctx, handlers, dayHandlers, event, opened, preview, tip };
+  return { ctx, handlers, dayHandlers, event, opened, preview, tip, precision };
 }
 
 test('application parses', () => { new vm.Script(source); });
@@ -136,4 +138,14 @@ test('blank event times must be filled; saving an overlapping event keeps both e
   vm.runInContext('savePopover()', ctx);
   assert.equal(ctx.segments.length, 2); assert.equal(persisted, 1); assert.equal(closed, 1);
   assert.equal(ctx.segments[0].start, 60); assert.equal(ctx.segments[1].start, 120);
+});
+
+test('phone precision selector uses five-minute snapping and stays fixed during the gesture', () => {
+  const { handlers, event, opened, precision } = harness(true);
+  precision.value = '5';
+  handlers.pointerdown(event(367));
+  precision.value = '15';
+  handlers.pointerup(event(401));
+  assert.equal(opened[0].start, 365);
+  assert.equal(opened[0].end, 400);
 });

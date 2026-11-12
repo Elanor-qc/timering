@@ -22,6 +22,12 @@
   </header>
 
   <main id="dayView">
+    <div id="mobileTools" class="mobile-tools" hidden>
+      <button id="newEventBtn" class="primary">＋ 新建事件</button>
+      <label for="touchPrecision">拖动精度
+        <select id="touchPrecision"><option value="15">15分钟</option><option value="5">5分钟</option></select>
+      </label>
+    </div>
     <svg id="ring" viewBox="0 0 400 400"></svg>
     <button id="untilNowBtn" class="until-now" title="从上一段结束记到现在">＋ 记到现在</button>
     <div id="dragTip" class="drag-tip" hidden></div>
@@ -52,7 +58,7 @@
     <button id="popCancel" class="ghost">取消</button>
     <button id="popSave" class="primary">保存</button>
   </div>
-  <div class="pop-hint">Enter 保存 · Esc 取消</div>
+  <div class="pop-hint desktop-setting">Enter 保存 · Esc 取消</div>
 </div>
 
 <div id="settingsOverlay" class="overlay" hidden></div>
@@ -61,22 +67,23 @@
   <div id="nativeOnly" class="settings-note" hidden>
     （当前为浏览器预览模式，以下系统功能不可用）
   </div>
-  <label class="pop-row switch">
+  <div id="androidInfo" class="settings-note" hidden>离线记录，数据保存在当前手机。卸载应用或清除应用数据会删除本地记录。</div>
+  <label class="pop-row switch desktop-setting">
     <span>开机自启</span>
     <input type="checkbox" id="setAutostart">
   </label>
-  <label class="pop-row switch">
+  <label class="pop-row switch desktop-setting">
     <span>全局快捷键 Ctrl+Alt+T<br><small>呼出 / 隐藏记录环</small></span>
     <input type="checkbox" id="setHotkey">
   </label>
-  <div class="pop-row dir-row">
+  <div class="pop-row dir-row desktop-setting">
     <span>数据目录</span>
     <div class="dir">
       <div id="dataDirLabel" class="dir-path">–</div>
       <button id="openDirOpen" class="ghost chip" onclick="openDataDir()">打开</button>
     </div>
   </div>
-  <div class="pop-hint">每天一个 JSON 文件，人类可读，可直接备份</div>
+  <div class="pop-hint desktop-setting">每天一个 JSON 文件，人类可读，可直接备份</div>
   <div class="pop-actions">
     <span class="spacer"></span>
     <button id="settingsClose" class="primary">关闭</button>

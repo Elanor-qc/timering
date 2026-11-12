@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "时环 — 24小时环形时间记录",
   "scripts": {
+    "android:build": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1",
     "test": "node --test tests/*.test.cjs",
     "predev": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-tray.ps1",
     "dev": "neu run",

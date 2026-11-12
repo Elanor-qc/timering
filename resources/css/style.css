@@ -27,6 +27,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 
 html, body { height: 100%; }
 
@@ -180,3 +181,36 @@ main#historyView { flex: 1; overflow-y: auto; padding: 4px 2px; }
   animation: toast-in .18s ease-out;
 }
 @keyframes toast-in { from { opacity: 0; transform: translate(-50%, 8px); } }
+
+/* ---------- Android ---------- */
+.android { font-size: 15px; }
+.android #app { height: 100dvh; padding: 8px 12px; }
+.android header { flex-wrap: wrap; gap: 4px; padding-bottom: 4px; }
+.android .nav { flex: 1; gap: 2px; justify-content: space-between; }
+.android .tools { gap: 2px; }
+.android button { min-height: 44px; padding: 6px 10px; }
+.android button.icon { min-width: 40px; }
+.android .date { min-width: 84px; font-size: 14px; }
+.android button.chip { font-size: 12px; padding: 4px 8px; }
+.android #ring { width: min(88vw, 360px, 48dvh); }
+.android .legend-row { min-height: 48px; }
+.android .legend-time, .android .legend-dur { font-size: 12px; }
+.android .popover {
+  left: 12px !important; top: auto !important; bottom: 12px;
+  width: calc(100% - 24px); max-height: calc(100dvh - 24px); overflow-y: auto;
+  padding: 18px; border-radius: 20px;
+}
+.android .overlay { background: rgba(0, 0, 0, .2); }
+.android .pop-row { margin: 14px 0; }
+.android .pop-row input { min-height: 44px; font-size: 16px; }
+.android .pop-title { font-size: 16px; }
+.android .settings-note { font-size: 14px; line-height: 1.8; }
+.android .drag-tip { max-width: calc(100vw - 16px); font-size: 12px; }
+.android .toast { width: max-content; max-width: calc(100% - 24px); text-align: center; }
+.mobile-tools { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.mobile-tools label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; }
+.mobile-tools select { min-height: 44px; font: inherit; color: var(--ink); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 4px 6px; }
+@media (max-width: 359px) {
+  .android header .nav { width: 100%; flex-basis: 100%; }
+  .android header .tools { margin-left: auto; }
+}

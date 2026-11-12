@@ -3,6 +3,7 @@
 /* ============================== 常量与状态 ============================== */
 
 const NATIVE = typeof NL_TOKEN !== 'undefined' && String(NL_TOKEN).length > 0 && !/[?&]browser\b/.test(location.search);
+const ANDROID = typeof TimeringAndroid !== 'undefined';
 const PALETTE = [
   '#F3B6C6', '#EAB7A0', '#E8CF92', '#B9D1AE',
   '#A7D1CD', '#AEC8E5', '#C5B7DF', '#DBB5D4'
@@ -55,6 +56,11 @@ function totalMinutes() {
 
 const Store = {
   async readDay(date) {
+    if (ANDROID) {
+      const result = JSON.parse(TimeringAndroid.readDay(date));
+      if (result.error) throw new Error(result.error);
+      return result.segments;
+    }
     if (NATIVE) {
       try {
         const raw = await Neutralino.filesystem.readFile(`${dataDir}/days/${date}.json`);
@@ -66,6 +72,11 @@ const Store = {
   },
   async writeDay(date) {
     const payload = { date, segments: segments.map(({ start, end, label }) => ({ start: minToHM(start), end: minToHM(end), label })) };
+    if (ANDROID) {
+      const result = JSON.parse(TimeringAndroid.writeDay(date, JSON.stringify(payload.segments)));
+      if (result.error) throw new Error(result.error);
+      return;
+    }
     if (NATIVE) {
       await Neutralino.filesystem.writeFile(`${dataDir}/days/${date}.json`, JSON.stringify(payload, null, 2));
     } else {
@@ -73,6 +84,11 @@ const Store = {
     }
   },
   async listDays() {
+    if (ANDROID) {
+      const result = JSON.parse(TimeringAndroid.listDays());
+      if (result.error) throw new Error(result.error);
+      return result.days.sort().reverse();
+    }
     let names = [];
     if (NATIVE) {
       try {
@@ -289,7 +305,7 @@ function pointerToMin(e) {
   const clock = (deg + 90 + 360) % 360;
   return { r, min: clock / 360 * 1440 };
 }
-const gran = e => e.shiftKey ? 5 : 15;
+const gran = e => e.shiftKey ? 5 : ANDROID ? Number($('#touchPrecision').value) : 15;
 const snapTo = (min, g) => Math.round(min / g) * g % 1440;
 
 ringSvg.addEventListener('pointerdown', e => {
@@ -378,9 +394,10 @@ ringSvg.addEventListener('click', e => {
   openPopover({ mode: 'create' }, null, e);
 });
 $('#dayView').addEventListener('click', e => {
-  if (e.target.closest?.('#ring, button, .legend-row')) return;
+  if (e.target.closest?.('#ring, button, input, select, label, #mobileTools, .legend-row')) return;
   openPopover({ mode: 'create' }, null, e);
 });
+$('#newEventBtn').addEventListener('click', e => openPopover({ mode: 'create' }, null, e));
 
 /* ============================== 弹窗（创建 / 编辑） ============================== */
 
@@ -459,7 +476,10 @@ function savePopover() {
 }
 
 function persist() {
-  Store.writeDay(currentDate, segments).catch(console.error);
+  Store.writeDay(currentDate, segments).catch(error => {
+    console.error(error);
+    toast('保存失败，请重试：' + error.message);
+  });
   render();
 }
 
@@ -544,6 +564,7 @@ $('#settingsOverlay').addEventListener('click', closeSettings);
 async function openSettings() {
   $('#settingsOverlay').hidden = false;
   $('#settingsPop').hidden = false;
+  if (ANDROID) return;
   $('#dataDirLabel').textContent = NATIVE ? `${dataDir}\\days` : '浏览器预览：localStorage';
   if (!NATIVE) {
     $('#nativeOnly').hidden = false;
@@ -759,6 +780,12 @@ async function setHotkey(on) {
 /* ============================== 启动 ============================== */
 
 document.addEventListener('DOMContentLoaded', async () => {
+  if (ANDROID) {
+    document.body.classList.add('android');
+    $('#mobileTools').hidden = false;
+    $('#androidInfo').hidden = false;
+    document.querySelectorAll('.desktop-setting').forEach(element => { element.hidden = true; });
+  }
   if (!NATIVE && location.hostname === '127.0.0.1') {
     localStorage.setItem('timering.show.signal', String(Date.now()));
     document.body.innerHTML = '<div style="display:flex;height:100vh;align-items:center;justify-content:center;font:14px sans-serif;color:#666">时环已在运行，此窗口可以关闭</div>';
@@ -774,3 +801,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   await loadDay(currentDate);
 });
+
+window.timeringBack = () => {
+  if (!pop.hidden) { closePopover(); return true; }
+  if (!$('#settingsPop').hidden) { closeSettings(); return true; }
+  if (!$('#historyView').hidden) {
+    $('#historyView').hidden = true;
+    $('#dayView').hidden = false;
+    return true;
+  }
+  return false;
+};

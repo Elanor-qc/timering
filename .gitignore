@@ -20,3 +20,12 @@
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Android machine configuration and generated files
+/android/.gradle/
+/android/.idea/
+/android/local.properties
+/android/build/
+/android/app/build/
+*.jks
+*.keystore

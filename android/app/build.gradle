@@ -1,0 +1,45 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.elanor.timering'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.elanor.timering'
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName '0.1.0'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    sourceSets {
+        main {
+            assets.srcDir layout.buildDirectory.dir('generated/timeringAssets')
+            res.srcDir layout.buildDirectory.dir('generated/timeringResources')
+        }
+    }
+}
+
+tasks.register('prepareWebAssets', Sync) {
+    from('../../resources') {
+        include 'index.html', 'css/**', 'js/app.js'
+        filter { line -> line.contains('<script src="/js/neutralino.js/') ? '' : line }
+    }
+    into layout.buildDirectory.dir('generated/timeringAssets/web')
+}
+tasks.register('prepareAppIcon', Copy) {
+    from('../../resources/icons/appIcon.png')
+    into layout.buildDirectory.dir('generated/timeringResources/drawable-nodpi')
+    rename { 'app_icon.png' }
+}
+tasks.named('preBuild') {
+    dependsOn 'prepareWebAssets', 'prepareAppIcon'
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}

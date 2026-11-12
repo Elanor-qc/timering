@@ -29,3 +29,24 @@ npm run build  # neu build --release
 开发启动和发布构建都会先编译 Windows 托盘辅助程序；发布结果在 `dist/timering/`，压缩包为 `dist/timering-release.zip`。重建发布包前请从托盘退出正在运行的时环。
 
 技术栈：Neutralino.js（系统 WebView2，单 exe ~2.5MB，常驻内存 ~30MB + webview）。
+
+## 安卓版
+
+支持 Android 8.0 及以上。沿用同一套环形界面、重叠事件、历史记录和奶油粉彩；手机上可以点击“新建事件”，或用手指拖动，并在界面上切换 15 / 5 分钟精度。
+
+安卓版使用系统 WebView 和应用私有目录内的 JSON 文件离线保存数据，无需联网或存储权限。系统返回键先关闭弹窗、退出历史页，再离开应用。卸载或清除应用数据会删除手机上的记录。
+
+构建需要 JDK 17、Android SDK Platform 35、Build Tools 34.0.0，以及 Gradle 8.11.1。可以用 Android Studio 打开 `android/`，也可以配置 `JAVA_HOME`、`ANDROID_HOME` 后执行：
+
+```bash
+npm run android:build
+```
+
+也可以在不提交 Git 的 `android/local.properties` 中配置本机目录（使用正斜杠）：
+
+```properties
+sdk.dir=C:/Users/your-name/AppData/Local/Android/Sdk
+java.home=C:/Program Files/Android/Android Studio/jbr
+```
+
+构建会从 `resources/` 生成共享页面资源，执行安卓本地存储测试和 Lint 检查，并输出可直接安装的测试包 `dist-android/timering-android-debug.apk`。此包使用本机调试签名，适合个人试用；正式发布前需要独立的发布签名。共享界面的测试仍使用 `npm test`。
