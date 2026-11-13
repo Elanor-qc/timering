@@ -146,6 +146,32 @@ function layoutSegments(entries) {
   return { items, count: Math.max(1, lanes.length) };
 }
 
+// Share one assignment between ring arcs, text outlines and legend dots.
+function assignEventColors(entries) {
+  const sorted = layoutSegments(entries).items.map(item => item.seg);
+  const colors = new Map();
+  const rgb = hex => [1, 3, 5].map(offset => parseInt(hex.slice(offset, offset + 2), 16));
+  const distance = (a, b) => rgb(a).reduce((sum, value, i) => sum + (value - rgb(b)[i]) ** 2, 0);
+  for (let i = 0; i < sorted.length; i++) {
+    const seg = sorted[i];
+    const neighbors = sorted.slice(0, i).filter((other, j) =>
+      j === i - 1 || (i === sorted.length - 1 && j === 0) || segmentsOverlap(seg, other));
+    const adjacent = new Set([colors.get(sorted[i - 1]?.id),
+      i === sorted.length - 1 ? colors.get(sorted[0]?.id) : undefined]);
+    const preferred = hashColor(seg.label);
+    const candidates = PALETTE.filter(color => !adjacent.has(color));
+    const score = color => {
+      const nearby = neighbors.map(other => colors.get(other.id));
+      const collisions = nearby.filter(other => other === color).length;
+      const contrast = nearby.length ? Math.min(...nearby.map(other => distance(color, other))) : 0;
+      return -collisions * 1000000 + contrast;
+    };
+    candidates.sort((a, b) => score(b) - score(a) || Number(b === preferred) - Number(a === preferred));
+    colors.set(seg.id, candidates[0]);
+  }
+  return colors;
+}
+
 function buildRing() {
   const NS = 'http://www.w3.org/2000/svg';
   gTicks = document.createElementNS(NS, 'g');
@@ -175,6 +201,7 @@ function render() {
   $('#dateLabel').textContent = dateLabel(currentDate);
   const layout = layoutSegments(segments);
   const sorted = layout.items.map(item => item.seg);
+  const eventColors = assignEventColors(segments);
   const laneSize = ARC_W / layout.count;
   const width = layout.count === 1 ? ARC_W - 4 : laneSize * .84;
 
@@ -190,7 +217,7 @@ function render() {
     const path = document.createElementNS(NS, 'path');
     path.setAttribute('d', arcPath(s.start, s.end, radius));
     path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', hashColor(s.label));
+    path.setAttribute('stroke', eventColors.get(s.id));
     path.setAttribute('stroke-width', width);
     path.setAttribute('stroke-linecap', 'butt');
     path.classList.add('seg');
@@ -213,7 +240,7 @@ function render() {
       txt.setAttribute('font-weight', 600);
       txt.setAttribute('fill', '#fff');
       txt.setAttribute('paint-order', 'stroke');
-      txt.setAttribute('stroke', hashColor(s.label));
+      txt.setAttribute('stroke', eventColors.get(s.id));
       txt.setAttribute('stroke-width', 2.6);
       txt.setAttribute('stroke-linejoin', 'round');
       txt.style.pointerEvents = 'none';
@@ -268,7 +295,7 @@ function render() {
   for (const s of sorted) {
     const li = document.createElement('li');
     li.className = 'legend-row';
-    li.innerHTML = `<span class="legend-dot" style="background:${hashColor(s.label)}"></span>` +
+    li.innerHTML = `<span class="legend-dot" style="background:${eventColors.get(s.id)}"></span>` +
       `<span class="legend-time">${minToHM(s.start)} – ${minToHM(s.end)}</span>` +
       `<span class="legend-label">${escapeHtml(s.label || '未命名')}</span>` +
       `<span class="legend-dur">${fmtDur(Math.min(spanOf(s), 1440))}</span>`;
