@@ -64,3 +64,34 @@ test('Android back closes a dialog or history before leaving the app', () => {
   assert.equal(ctx.window.timeringBack(), false);
   assert.deepEqual(calls, ['close event', 'close settings']);
 });
+
+
+test('manual Android events accept future times at arbitrary minute precision', () => {
+  const html = fs.readFileSync('resources/index.html', 'utf8');
+  for (const id of ['popStart', 'popEnd']) {
+    const tag = html.match(new RegExp('<input[^>]*id="' + id + '"[^>]*>'))[0];
+    assert.match(tag, /step="60"/, 'manual time entry must accept every minute');
+    assert.doesNotMatch(tag, /\b(?:min|max)=/, 'manual times must not be limited by the current time');
+  }
+  const inputs = {
+    '#popStart': { value: '23:11', checkValidity: () => true },
+    '#popEnd': { value: '23:57', checkValidity: () => true },
+    '#popLabel': { value: 'future event' }
+  };
+  let persisted = false;
+  const ctx = vm.createContext({
+    ANDROID: true, currentDate: '2026-11-13',
+    Date: class extends Date { constructor() { super('2026-11-13T10:00:00+08:00'); } },
+    popCtx: { mode: 'create' }, uid: 1, segments: [],
+    $: selector => inputs[selector],
+    hmToMin: value => { const [h, m] = value.split(':').map(Number); return h * 60 + m; },
+    spanOf: s => ((s.end - s.start + 1440) % 1440) || 1440,
+    toast() {}, closePopover() {}, persist() { persisted = true; }
+  });
+  vm.runInContext(source.slice(source.indexOf('function savePopover()'), source.indexOf('function persist()')), ctx);
+  vm.runInContext('savePopover()', ctx);
+  assert.equal(persisted, true);
+  assert.equal(ctx.segments.length, 1);
+  assert.equal(ctx.segments[0].start, 1391);
+  assert.equal(ctx.segments[0].end, 1437);
+});
